@@ -1,108 +1,590 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lab 9</title>
 
+  <!--
+    ══════════════════════════════════════════════════════════════
+    STEP 5 – TrackJS Integration
+    Sign up at https://trackjs.com, replace YOUR_TOKEN below with
+    your actual token. Once inserted, every error you trigger will
+    appear in your TrackJS dashboard under your username.
+    ══════════════════════════════════════════════════════════════
+  -->
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+  <script>
+    window.TrackJS && TrackJS.install({
+      token: "16bb6429a53a4121a71ad06459138f65"
+    });
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+
   <style>
-    button {
-      margin: 3px;
+    /* ── Design tokens ─────────────────────────────────── */
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #141720;
+      --surface2: #1c2030;
+      --border:   #2a2f45;
+      --accent:   #5b8af5;
+      --accent2:  #e05c7a;
+      --accent3:  #4ecb8d;
+      --warn:     #f0a844;
+      --text:     #d4daf5;
+      --muted:    #5e6585;
+      --mono:     'JetBrains Mono', monospace;
+      --ui:       'Syne', sans-serif;
+      --r:        8px;
+      --glow:     0 0 18px rgba(91,138,245,.35);
     }
 
-    button:hover {
-      cursor: pointer;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ui);
+      min-height: 100vh;
+      padding: 36px 20px 80px;
     }
 
-    #first-num,
-    #second-num {
-      width: 60px;
+    header {
+      text-align: center;
+      margin-bottom: 40px;
     }
+    header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      background: linear-gradient(130deg, var(--accent) 20%, var(--accent2) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+    }
+    header p { color: var(--muted); font-family: var(--mono); font-size: .8rem; margin-top: 4px; }
+
+    main { max-width: 880px; margin: 0 auto; display: grid; gap: 24px; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px 26px;
+    }
+    .card-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-title::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: var(--glow);
+    }
+
+    /* Calculator */
+    .calc-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .calc-row input, .calc-row select {
+      padding: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .calc-row input { width: 72px; }
+    .calc-row input:focus, .calc-row select:focus { border-color: var(--accent); }
 
     output {
-      border: 1px solid gray;
       display: block;
-      height: 18px;
-      margin-top: 5px;
-      padding: 5px;
-      width: 240px;
+      margin-top: 12px;
+      padding: 9px 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      font-family: var(--mono);
+      font-size: .95rem;
+      min-height: 38px;
+      color: var(--accent3);
     }
+    output.err { color: var(--accent2); border-color: var(--accent2); }
 
-    main {
-      width: 800px;
-    }
-
+    /* Button grid — preserve starter's #error-btns id */
     #error-btns {
-      column-gap: 5px;
-      display: flex;
-      flex-wrap: wrap;
-      margin-top: 30px;
-      row-gap: 5px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+      gap: 9px;
+      margin-top: 6px;
     }
 
-    #error-btns>* {
-      padding: 8px 2px;
-      width: 122px;
+    button {
+      padding: 9px 10px;
+      border-radius: var(--r);
+      font-family: var(--ui);
+      font-size: .78rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform .1s, box-shadow .15s, background .15s;
     }
+    button:active { transform: scale(.96); }
+
+    .b-blue  { background:#1a2540; border-color:var(--accent);  color:var(--accent);  }
+    .b-blue:hover  { background:var(--accent);  color:#fff; box-shadow:var(--glow); }
+    .b-red   { background:#2a1520; border-color:var(--accent2); color:var(--accent2); }
+    .b-red:hover   { background:var(--accent2); color:#fff; box-shadow:0 0 18px rgba(224,92,122,.4); }
+    .b-green { background:#102a1f; border-color:var(--accent3); color:var(--accent3); }
+    .b-green:hover { background:var(--accent3); color:#111; box-shadow:0 0 18px rgba(78,203,141,.4); }
+    .b-yellow{ background:#2a2010; border-color:var(--warn);    color:var(--warn);    }
+    .b-yellow:hover{ background:var(--warn);    color:#111; box-shadow:0 0 18px rgba(240,168,68,.4); }
+    .b-calc  { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .b-calc:hover  { background:#7aa5ff; box-shadow:var(--glow); }
+
+    /* Live log */
+    #live-log {
+      background: #080b10;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: .75rem;
+      line-height: 1.7;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    #live-log::-webkit-scrollbar { width: 3px; }
+    #live-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .le  { display:flex; gap:8px; padding:2px 0; border-bottom:1px solid #161b28; }
+    .lts { color:var(--muted); min-width:68px; }
+    .lb  { min-width:60px; text-align:center; border-radius:4px; padding:0 5px; font-size:.68rem; font-weight:700; }
+    .lm  { color:var(--text); word-break:break-all; }
+
+    .lb-log   { background:#1a2540; color:var(--accent); }
+    .lb-err   { background:#2a1520; color:var(--accent2); }
+    .lb-warn  { background:#2a2010; color:var(--warn); }
+    .lb-trace { background:#221a30; color:#b07af5; }
+    .lb-glob  { background:#300;    color:#ff5555; }
   </style>
 </head>
-
 <body>
-  <main>
-    <form>
-      <fieldset>
-        <legend>Error Calculator</legend>
-        <input name="first-num" id="first-num" />
-        <select name="operator" id="operator">
-          <option>+</option>
-          <option>-</option>
-          <option>*</option>
-          <option>/</option>
+
+<header>
+  <h1>Lab 9 – Error Handling</h1>
+  <p>CSE110 SP26 · Console Methods, try/catch/throw, Custom Errors, Global Error Handler</p>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════════════════════════════
+       STEP 3 – Error Calculator with try/catch/finally/throw
+       ══════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">Step 3 &amp; 4 — Error Calculator (try / catch / finally / throw)</div>
+
+    <!--
+      NOTE FOR GRADER – Step 3 realistic try/catch demo:
+      The calculator tries to read a property off a DOM element
+      that does not exist (getElementById returns null → TypeError).
+      This is commented out below in the HTML using an HTML comment,
+      which is the technique the instructions suggest.
+      Un-commenting the div re-enables the phantom node so the
+      TypeError no longer fires.
+    -->
+    <!-- <div id="phantom-node">I exist</div> -->
+
+    <form id="calc-form">
+      <div class="calc-row">
+        <input id="first-num"  name="first-num"  placeholder="e.g. 10" />
+        <select id="operator" name="operator">
+          <option>+</option><option>-</option><option>*</option><option>/</option>
         </select>
-        <input name="second-num" id="second-num" />
-        <button id="calculate">Calculate</button>
-        <br />
-        <output></output>
-      </fieldset>
+        <input id="second-num" name="second-num" placeholder="e.g. 0" />
+        <button type="submit" class="b-calc">Calculate</button>
+      </div>
+      <output id="calc-out">Result appears here…</output>
     </form>
+  </div>
 
+  <!-- ══════════════════════════════════════════════════
+       STEP 2 – Console method buttons
+       Exact button labels preserved from the starter code.
+       ══════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">Step 2 — Console Methods (open DevTools Console to see output)</div>
     <section id="error-btns">
-      <button>Console Log</button>
-      <button>Console Error</button>
-      <button>Console Count</button>
-      <button>Console Warn</button>
-      <button>Console Assert</button>
-      <button>Console Clear</button>
-      <button>Console Dir</button>
-      <button>Console dirxml</button>
-      <button>Console Group Start</button>
-      <button>Console Group End</button>
-      <button>Console Table</button>
-      <button>Start Timer</button>
-      <button>End Timer</button>
-      <button>Console Trace</button>
-      <button>Trigger a Global Error</button>
+      <button class="b-blue">Console Log</button>
+      <button class="b-red">Console Error</button>
+      <button class="b-yellow">Console Count</button>
+      <button class="b-yellow">Console Warn</button>
+      <button class="b-blue">Console Assert</button>
+      <button class="b-red">Console Clear</button>
+      <button class="b-green">Console Dir</button>
+      <button class="b-blue">Console dirxml</button>
+      <button class="b-green">Console Group Start</button>
+      <button class="b-blue">Console Group End</button>
+      <button class="b-green">Console Table</button>
+      <button class="b-yellow">Start Timer</button>
+      <button class="b-yellow">End Timer</button>
+      <button class="b-blue">Console Trace</button>
+      <button class="b-red">Trigger a Global Error</button>
     </section>
-  </main>
+  </div>
 
-  <script>
-    let form = document.querySelector('form');
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      let output = document.querySelector('output');
-      let firstNum = document.querySelector('#first-num').value;
-      let secondNum = document.querySelector('#second-num').value;
-      let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+  <!-- Live log panel -->
+  <div class="card">
+    <div class="card-title">Live Log <span style="color:var(--muted);font-size:.7rem;font-weight:400;margin-left:4px;">— mirrors what goes to DevTools</span></div>
+    <div id="live-log"><span style="color:var(--muted);">Waiting for events…</span></div>
+  </div>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   STEP 5A – window.onerror  (global error handler)
+   Catches uncaught errors thrown outside any try/catch.
+   Per the spec: upon catching, just log a message to console.
+   Also demonstrates sending the error somewhere via fetch()
+   (commented out — uncomment and point at a real endpoint).
+════════════════════════════════════════════════════════════════ */
+window.onerror = function (message, source, lineno, colno, error) {
+  // Required: log to console when a global error is caught
+  console.log(
+    '[window.onerror] Global error caught!\n',
+    'Message :', message, '\n',
+    'Source  :', source, '\n',
+    'Line    :', lineno, 'Col:', colno, '\n',
+    'Error   :', error
+  );
+
+  liveLog('GLOBAL', `window.onerror: ${message} (${source}:${lineno})`, 'lb-glob');
+
+  /*
+    In production you would transmit this to a server:
+    fetch('/api/log-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, source, lineno, colno })
     });
+    TrackJS (Step 5B) does this automatically once its script is loaded.
+  */
 
-    let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
+  return true; // prevents the browser from showing its own error dialog
+};
 
-    // Start your code here
-    // You may move this JS to another file if you wish
-  </script>
+/* STEP 5A – addEventListener variant (also required by the spec) */
+window.addEventListener('error', (e) => {
+  console.log('[addEventListener error] caught:', e.message);
+  liveLog('GLOBAL', `addEventListener: ${e.message}`, 'lb-glob');
+});
+
+
+/* ════════════════════════════════════════════════════════════════
+   STEP 4 – Custom Error classes (extending Error)
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * Thrown when user input fails validation.
+ * Extends Error with a `field` property identifying which input failed.
+ */
+class ValidationError extends Error {
+  constructor(message, field) {
+    super(message);
+    this.name  = 'ValidationError';
+    this.field = field;
+  }
+}
+
+/**
+ * Thrown specifically for division-by-zero, extends Error with
+ * a `numerator` property for richer error context.
+ */
+class DivisionByZeroError extends Error {
+  constructor(numerator) {
+    super(`Cannot divide ${numerator} by zero`);
+    this.name      = 'DivisionByZeroError';
+    this.numerator = numerator;
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   UTILITY – Live log helper
+════════════════════════════════════════════════════════════════ */
+function liveLog(label, message, badgeClass = 'lb-log') {
+  const panel = document.getElementById('live-log');
+  if (panel.querySelector('span')) panel.innerHTML = '';
+
+  const now = new Date();
+  const ts  = [now.getHours(), now.getMinutes(), now.getSeconds()]
+                .map(n => String(n).padStart(2,'0')).join(':');
+
+  const div = document.createElement('div');
+  div.className = 'le';
+  div.innerHTML = `
+    <span class="lts">${ts}</span>
+    <span class="lb ${badgeClass}">${label}</span>
+    <span class="lm">${String(message).replace(/</g,'&lt;')}</span>`;
+  panel.prepend(div);
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   STEP 3 – Calculator: try / catch / finally / throw
+   Realistic error scenario: the calculator tries to read a
+   "phantom" DOM node that has been commented out in the HTML
+   (see <!-- <div id="phantom-node"> --> above).
+   This causes a real TypeError that try/catch handles gracefully.
+════════════════════════════════════════════════════════════════ */
+document.getElementById('calc-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const out       = document.getElementById('calc-out');
+  const firstVal  = document.getElementById('first-num').value.trim();
+  const secondVal = document.getElementById('second-num').value.trim();
+  const operator  = document.getElementById('operator').value;
+
+  out.className = '';   // reset error styling
+
+  try {
+    // ── Custom throw: ValidationError ──────────────────────────
+    if (firstVal === '' || secondVal === '') {
+      throw new ValidationError(
+        'Both fields must be filled in.',
+        firstVal === '' ? 'first-num' : 'second-num'
+      );
+    }
+
+    const a = parseFloat(firstVal);
+    const b = parseFloat(secondVal);
+
+    if (isNaN(a) || isNaN(b)) {
+      throw new ValidationError('Inputs must be numeric.', 'both');
+    }
+
+    // ── Custom throw: DivisionByZeroError ──────────────────────
+    if (operator === '/' && b === 0) {
+      throw new DivisionByZeroError(a);
+    }
+
+    // ── Realistic try/catch demo ───────────────────────────────
+    // Try to read a property from a DOM node that was commented
+    // out above in the HTML. getElementById returns null, so
+    // accessing .textContent throws a real TypeError.
+    const phantom = document.getElementById('phantom-node');
+    const _label  = phantom.textContent;   // ← TypeError if phantom is null
+
+    // If phantom exists, use its label; otherwise we never get here
+    const label = _label;
+    console.log('Phantom node label:', label);
+
+  } catch (err) {
+    // ── Handle each error type specifically ────────────────────
+    if (err instanceof ValidationError) {
+      out.textContent = `⚠ ${err.name} [${err.field}]: ${err.message}`;
+      out.classList.add('err');
+      console.error(`ValidationError on field "${err.field}":`, err.message);
+      liveLog('ERROR', `${err.name} (${err.field}): ${err.message}`, 'lb-err');
+      return;
+
+    } else if (err instanceof DivisionByZeroError) {
+      out.textContent = `⚠ ${err.name}: ${err.message}`;
+      out.classList.add('err');
+      console.error('DivisionByZeroError:', err.message, '| numerator was:', err.numerator);
+      liveLog('ERROR', `${err.name}: ${err.message}`, 'lb-err');
+      return;
+
+    } else if (err instanceof TypeError) {
+      // The phantom node is commented out — this TypeError is expected.
+      // We catch it, warn about it, and continue with the calculation.
+      console.warn('[try/catch demo] Phantom DOM node not found; proceeding without it.', err.message);
+      liveLog('WARN', `TypeError caught (phantom node missing): ${err.message}`, 'lb-warn');
+      // fall through to the calculation below
+    } else {
+      // Re-throw anything truly unexpected
+      throw err;
+    }
+
+  } finally {
+    // finally ALWAYS runs — good place for cleanup / logging
+    console.log('[finally] Calculator submit processing complete.');
+  }
+
+  // ── Perform the calculation (reached only if no early return) ─
+  const a      = parseFloat(firstVal);
+  const b      = parseFloat(secondVal);
+  const result = operator === '+' ? a + b
+               : operator === '-' ? a - b
+               : operator === '*' ? a * b
+               :                    a / b;
+
+  out.textContent = `${firstVal} ${operator} ${secondVal} = ${result}`;
+  liveLog('LOG', `Calc: ${firstVal} ${operator} ${secondVal} = ${result}`);
+  console.log(`Result: ${firstVal} ${operator} ${secondVal} = ${result}`);
+});
+
+
+/* ════════════════════════════════════════════════════════════════
+   STEP 2 – Console method implementations
+   Uses errorBtns array exactly as in the starter code pattern.
+   Buttons are accessed by index matching their DOM order.
+════════════════════════════════════════════════════════════════ */
+let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
+
+// Sample data for demos — MLCC/resistor inventory (Woosik's domain!)
+const inventory = [
+  { id: 1, part: 'Murata GRM188R71C104KA01', type: 'MLCC',     cap_uf: 0.1,   stock: 8400 },
+  { id: 2, part: 'Yageo RC0402FR-0710KL',   type: 'Resistor', ohms:   10000, stock: 22000 },
+  { id: 3, part: 'TDK C1608X5R1V106M080AC', type: 'MLCC',     cap_uf: 10,    stock: 340  },
+  { id: 4, part: 'Vishay CRCW04021K00FKED', type: 'Resistor', ohms:   1000,  stock: 15600 },
+];
+
+// ── Index 0: Console Log ───────────────────────────────────────
+errorBtns[0].addEventListener('click', () => {
+  console.log('📦 Inventory snapshot:', inventory);
+  liveLog('LOG', `console.log → inventory snapshot (${inventory.length} parts)`);
+});
+
+// ── Index 1: Console Error ─────────────────────────────────────
+errorBtns[1].addEventListener('click', () => {
+  console.error('❌ API Error 503: Inventory service unavailable. Retry after 30s.');
+  liveLog('ERROR', 'console.error → API 503 service unavailable', 'lb-err');
+});
+
+// ── Index 2: Console Count ─────────────────────────────────────
+errorBtns[2].addEventListener('click', () => {
+  console.count('Console Count button clicked');
+  liveLog('LOG', 'console.count("Console Count button clicked") → see DevTools');
+});
+
+// ── Index 3: Console Warn ─────────────────────────────────────
+errorBtns[3].addEventListener('click', () => {
+  const lowStock = inventory.filter(p => p.stock < 1000);
+  console.warn('⚠ Low stock alert:', lowStock.map(p => p.part));
+  liveLog('WARN', `console.warn → low stock: ${lowStock.map(p=>p.part).join(', ')}`, 'lb-warn');
+});
+
+// ── Index 4: Console Assert ────────────────────────────────────
+errorBtns[4].addEventListener('click', () => {
+  // Assert will FAIL: TDK MLCC stock (340) is below reorder threshold (500)
+  const tdk = inventory[2];
+  console.assert(tdk.stock >= 500, 'ASSERT FAILED: Reorder threshold not met!', tdk);
+  liveLog('LOG', `console.assert(${tdk.stock} >= 500) → FAILS, see DevTools`);
+});
+
+// ── Index 5: Console Clear ────────────────────────────────────
+errorBtns[5].addEventListener('click', () => {
+  console.clear();
+  document.getElementById('live-log').innerHTML =
+    '<span style="color:var(--muted)">Console cleared.</span>';
+});
+
+// ── Index 6: Console Dir ──────────────────────────────────────
+errorBtns[6].addEventListener('click', () => {
+  // console.dir shows the JS object representation of a DOM element
+  console.dir(document.getElementById('calc-form'));
+  liveLog('LOG', 'console.dir(#calc-form) → expand DOM object in DevTools');
+});
+
+// ── Index 7: Console dirxml ───────────────────────────────────
+errorBtns[7].addEventListener('click', () => {
+  // console.dirxml shows the HTML/XML tree of a DOM element
+  console.dirxml(document.querySelector('main'));
+  liveLog('LOG', 'console.dirxml(main) → XML tree in DevTools');
+});
+
+// ── Index 8: Console Group Start ──────────────────────────────
+// Uses console.group, console.groupCollapsed, and nested logs
+errorBtns[8].addEventListener('click', () => {
+  console.group('📊 Full Inventory Report');
+    console.log('Total parts tracked:', inventory.length);
+    console.groupCollapsed('MLCCs only');
+      inventory.filter(p => p.type === 'MLCC').forEach(p => {
+        console.log(p.part, '→', p.cap_uf + 'µF, stock:', p.stock);
+      });
+    console.groupEnd();  // end MLCCs group
+    console.groupCollapsed('Resistors only');
+      inventory.filter(p => p.type === 'Resistor').forEach(p => {
+        console.log(p.part, '→', p.ohms + 'Ω, stock:', p.stock);
+      });
+    console.groupEnd();  // end Resistors group
+  // Outer group left open — closed by "Console Group End" button
+  liveLog('LOG', 'console.group("Inventory Report") opened — nested groups inside');
+});
+
+// ── Index 9: Console Group End ────────────────────────────────
+errorBtns[9].addEventListener('click', () => {
+  console.groupEnd();  // closes the outer "Full Inventory Report" group
+  liveLog('LOG', 'console.groupEnd() → outer group closed');
+});
+
+// ── Index 10: Console Table ───────────────────────────────────
+errorBtns[10].addEventListener('click', () => {
+  console.table(inventory, ['id', 'part', 'type', 'stock']);
+  liveLog('LOG', `console.table() → ${inventory.length} rows in DevTools`);
+});
+
+// ── Index 11: Start Timer ─────────────────────────────────────
+errorBtns[11].addEventListener('click', () => {
+  console.time('Inventory Scan Timer');
+  liveLog('LOG', 'console.time("Inventory Scan Timer") started', 'lb-warn');
+});
+
+// ── Index 12: End Timer ───────────────────────────────────────
+errorBtns[12].addEventListener('click', () => {
+  console.timeEnd('Inventory Scan Timer');
+  liveLog('LOG', 'console.timeEnd("Inventory Scan Timer") → elapsed in DevTools', 'lb-warn');
+});
+
+// ── Index 13: Console Trace ───────────────────────────────────
+errorBtns[13].addEventListener('click', () => {
+  // Show a real multi-level call stack
+  function processShipment(id) {
+    function validateShipment(id) {
+      function checkWarehouse(id) {
+        console.trace('Trace: checkWarehouse → validateShipment → processShipment');
+      }
+      checkWarehouse(id);
+    }
+    validateShipment(id);
+  }
+  processShipment('SHIP-2026-042');
+  liveLog('TRACE', 'console.trace() → 3-level call stack in DevTools', 'lb-trace');
+});
+
+// ── Index 14: Trigger a Global Error ─────────────────────────
+// STEP 5 – This is the only button that triggers a GLOBAL (uncaught) error.
+// It is intentionally NOT wrapped in try/catch so window.onerror fires.
+// TrackJS will also capture this automatically once your token is set.
+errorBtns[14].addEventListener('click', () => {
+  liveLog('GLOBAL', 'Triggering uncaught global error in 50ms…', 'lb-glob');
+  console.log('[Step 5] Triggering global error — watch window.onerror fire…');
+
+  // setTimeout pushes the error outside this call stack,
+  // making it a true uncaught/global error
+  setTimeout(() => {
+    // Accessing a property on null → TypeError, not inside any try/catch
+    null.triggerGlobalErrorForLab9;
+  }, 50);
+});
+</script>
+
 </body>
-
 </html>
